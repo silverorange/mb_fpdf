@@ -226,7 +226,7 @@ class FPDF extends \FPDF
         /* @codingStandardsIgnoreEnd */
 
         // Check signature
-        $signature = "\x89PNG\x13\x10\x26\x10";
+        $signature = "\x89PNG\x0d\x0a\x1a\x0a";
         if ($this->_readstream($f, 8) !== $signature) {
             $this->Error('Not a PNG file: ' . $file);
         }
