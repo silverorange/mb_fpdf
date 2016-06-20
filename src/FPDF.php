@@ -299,7 +299,7 @@ class FPDF extends \FPDF
                         ord(mb_substr($t, 5, 1, '8bit'))
                     );
                 } else {
-                    $pos = mb_strpos($t, "\x00", '8bit');
+                    $pos = mb_strpos($t, "\x00", 0, '8bit');
                     if ($pos !== false) {
                         $trns = array($pos);
                     }
