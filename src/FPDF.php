@@ -130,20 +130,20 @@ class FPDF extends \FPDF
      *
      * @param integer $height optional. The height in page units of the
      *                        line break. If not specified, the cursor is
-     *                        just set to the beginning of the line. Font
-     *                        scaling is applied to this value.
+     *                        just set to the beginning of the at the document
+     *                        origin. Font scaling is applied to this value.
      *
      * @return void
      */
-    protected function writeNewLine($height = 0)
+    public function writeNewLine($height = 0)
     {
-        if ($height >= 0) {
+        if ($height == 0) {
+            $this->SetY(0, true);
+        } else {
             $this->SetY(
                 $this->GetY() + $this->getFontScaledValue($height),
                 true
             );
-        } else {
-            $this->SetY(0, true);
         }
     }
 
@@ -226,7 +226,7 @@ class FPDF extends \FPDF
         /* @codingStandardsIgnoreEnd */
 
         // Check signature
-        $signature = "\x89PNG\x13\x10\x26\x10";
+        $signature = "\x89PNG\x0d\x0a\x1a\x0a";
         if ($this->_readstream($f, 8) !== $signature) {
             $this->Error('Not a PNG file: ' . $file);
         }
@@ -299,7 +299,7 @@ class FPDF extends \FPDF
                         ord(mb_substr($t, 5, 1, '8bit'))
                     );
                 } else {
-                    $pos = mb_strpos($t, "\x00", '8bit');
+                    $pos = mb_strpos($t, "\x00", 0, '8bit');
                     if ($pos !== false) {
                         $trns = array($pos);
                     }
@@ -354,7 +354,7 @@ class FPDF extends \FPDF
             } else {
                 // RGB image
                 $len = 4 * $w;
-                for ($i=0; $i < $h; $i++) {
+                for ($i = 0; $i < $h; $i++) {
                     $pos = (1 + $len) * $i;
                     $color .= $data[$pos];
                     $alpha .= $data[$pos];
@@ -372,6 +372,7 @@ class FPDF extends \FPDF
                 $this->PDFVersion = '1.4';
             }
         }
+
         $info['data'] = $data;
         return $info;
     }
@@ -387,5 +388,92 @@ class FPDF extends \FPDF
     {
         /* @codingStandardsIgnoreEnd */
         return mb_strlen($this->buffer, '8bit');
+    }
+
+    /**
+     * @codingStandardsIgnoreStart
+     */
+    protected function _putimage(&$info)
+    {
+        /* @codingStandardsIgnoreEnd */
+        $this->_newobj();
+        $info['n'] = $this->n;
+        $this->_put('<</Type /XObject');
+        $this->_put('/Subtype /Image');
+        $this->_put('/Width ' . $info['w']);
+        $this->_put('/Height ' . $info['h']);
+        if ($info['cs'] === 'Indexed') {
+            $this->_put(
+                '/ColorSpace [/Indexed /DeviceRGB '
+                . (mb_strlen($info['pal'], '8bit') / 3 - 1)
+                . ' '
+                . ($this->n + 1)
+                . ' 0 R]'
+            );
+        } else {
+            $this->_put('/ColorSpace /' . $info['cs']);
+            if ($info['cs'] === 'DeviceCMYK') {
+                $this->_put('/Decode [1 0 1 0 1 0 1 0]');
+            }
+        }
+        $this->_put('/BitsPerComponent ' . $info['bpc']);
+        if (isset($info['f'])) {
+            $this->_put('/Filter /' . $info['f']);
+        }
+        if (isset($info['dp'])) {
+            $this->_put('/DecodeParms <<' . $info['dp'] . '>>');
+        }
+        if (isset($info['trns']) && is_array($info['trns'])) {
+            $trns = '';
+            for ($i = 0; $i < count($info['trns']); $i++) {
+                $trns .= $info['trns'][$i] . ' ' . $info['trns'][$i] . ' ';
+            }
+            $this->_put('/Mask [' . $trns . ']');
+        }
+        if (isset($info['smask'])) {
+            $this->_put('/SMask ' . ($this->n + 1) . ' 0 R');
+        }
+        $this->_put('/Length ' . mb_strlen($info['data'], '8bit') . '>>');
+        $this->_putstream($info['data']);
+        $this->_put('endobj');
+
+        // Soft mask
+        if (isset($info['smask'])) {
+            $dp = '/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns ' . $info['w'];
+            $smask = array(
+                'w'    => $info['w'],
+                'h'    => $info['h'],
+                'cs'   => 'DeviceGray',
+                'bpc'  => 8,
+                'f'    => $info['f'],
+                'dp'   => $dp,
+                'data' => $info['smask']
+            );
+            $this->_putimage($smask);
+        }
+
+        // Palette
+        if ($info['cs'] === 'Indexed') {
+            $this->_putstreamobject($info['pal']);
+        }
+    }
+
+    /**
+     * @codingStandardsIgnoreStart
+     */
+    protected function _putstreamobject($data)
+    {
+        /* @codingStandardsIgnoreEnd */
+        if ($this->compress) {
+            $entries = '/Filter /FlateDecode ';
+            $data = gzcompress($data);
+        } else {
+            $entries = '';
+        }
+        $entries .= '/Length ' . mb_strlen($data, '8bit');
+        $this->_newobj();
+        $this->_put('<<' . $entries . '>>');
+        $this->_putstream($data);
+        $this->_put('endobj');
     }
 }
