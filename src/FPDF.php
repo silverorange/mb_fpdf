@@ -130,20 +130,20 @@ class FPDF extends \FPDF
      *
      * @param integer $height optional. The height in page units of the
      *                        line break. If not specified, the cursor is
-     *                        just set to the beginning of the line. Font
-     *                        scaling is applied to this value.
+     *                        just set to the beginning of the at the document
+     *                        origin. Font scaling is applied to this value.
      *
      * @return void
      */
-    protected function writeNewLine($height = 0)
+    public function writeNewLine($height = 0)
     {
-        if ($height >= 0) {
+        if ($height == 0) {
+            $this->SetY(0, true);
+        } else {
             $this->SetY(
                 $this->GetY() + $this->getFontScaledValue($height),
                 true
             );
-        } else {
-            $this->SetY(0, true);
         }
     }
 
