@@ -354,7 +354,7 @@ class FPDF extends \FPDF
             } else {
                 // RGB image
                 $len = 4 * $w;
-                for ($i=0; $i < $h; $i++) {
+                for ($i = 0; $i < $h; $i++) {
                     $pos = (1 + $len) * $i;
                     $color .= $data[$pos];
                     $alpha .= $data[$pos];
@@ -372,6 +372,7 @@ class FPDF extends \FPDF
                 $this->PDFVersion = '1.4';
             }
         }
+
         $info['data'] = $data;
         return $info;
     }
