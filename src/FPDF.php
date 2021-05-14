@@ -88,7 +88,7 @@ class FPDF extends \FPDF
                 $italic++;
             } elseif ($part === '<b>') {
                 if ($bold === 0) {
-                    if ($italici > 0) {
+                    if ($italic > 0) {
                         $this->SetFont('', 'bi');
                     } else {
                         $this->SetFont('', 'b');
