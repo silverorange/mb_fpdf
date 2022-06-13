@@ -163,21 +163,16 @@ class FPDF extends \FPDF
     }
 
     /**
-     * Verifies the required settings and excentions are available for FPDF
+     * Verifies the required settings and extensions are available for FPDF
      *
-     * We disable the <kbd>mbstring.function_overload</kbd> check because
-     * multibyte functions are explicitly used where required in this class.
+     * We disable checks because multibyte functions are explicitly used
+     * where required in this class, and additional checks are for removed
+     * and deprecated PHP features.
      *
      * @return void
-     *
-     * @codingStandardsIgnoreStart
      */
     protected function _dochecks()
     {
-        /* @codingStandardsIgnoreEnd */
-        if (get_magic_quotes_runtime()) {
-            @set_magic_quotes_runtime(0);
-        }
     }
 
     /**
